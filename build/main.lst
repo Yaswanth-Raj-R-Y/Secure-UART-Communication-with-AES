@@ -1,0 +1,1010 @@
+ARM GAS  /tmp/ccjEoKGj.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"main.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.rodata.uart1_aes_decrypt.str1.4,"aMS",%progbits,1
+  18              		.align	2
+  19              	.LC0:
+  20 0000 50616464 		.ascii	"Padding len %d\012\000"
+  20      696E6720 
+  20      6C656E20 
+  20      25640A00 
+  21              		.align	2
+  22              	.LC1:
+  23 0010 486F2079 		.ascii	"Ho yahhh, padding workd\000"
+  23      61686868 
+  23      2C207061 
+  23      6464696E 
+  23      6720776F 
+  24              		.section	.text.uart1_aes_decrypt,"ax",%progbits
+  25              		.align	1
+  26              		.global	uart1_aes_decrypt
+  27              		.arch armv7e-m
+  28              		.syntax unified
+  29              		.thumb
+  30              		.thumb_func
+  31              		.fpu fpv4-sp-d16
+  33              	uart1_aes_decrypt:
+  34              	.LVL0:
+  35              	.LFB139:
+  36              		.file 1 "app/main.c"
+   1:app/main.c    **** #include "main.h"
+   2:app/main.c    **** 
+   3:app/main.c    **** void uart1_aes_encrypt(uint8_t* dt, uint32_t dt_len);
+   4:app/main.c    **** void uart1_aes_decrypt(uint8_t* d_dt, uint8_t* s_dt, uint32_t* d_len, uint8_t s_len);
+   5:app/main.c    **** 
+   6:app/main.c    **** uint8_t uart1_rx(void);
+   7:app/main.c    **** void uart1_tx(uint8_t* tx_dt, uint8_t len);
+   8:app/main.c    **** 
+   9:app/main.c    **** uint8_t buffer1[256];
+  10:app/main.c    **** uint32_t buffer1_len;
+  11:app/main.c    **** 
+  12:app/main.c    **** uint8_t buffer2[256];
+  13:app/main.c    **** uint32_t buffer2_len;
+  14:app/main.c    **** 
+  15:app/main.c    **** char* message = "Confidential: Please keep this information safe.";
+ARM GAS  /tmp/ccjEoKGj.s 			page 2
+
+
+  16:app/main.c    **** 
+  17:app/main.c    **** int main()
+  18:app/main.c    **** {
+  19:app/main.c    ****     SystemInit();
+  20:app/main.c    ****     uart1_init(115200);
+  21:app/main.c    ****     uart2_init(115200);
+  22:app/main.c    ****     aes_init();
+  23:app/main.c    ****     
+  24:app/main.c    ****     printf("******** UART with AES encryption ********\n\n");
+  25:app/main.c    **** 
+  26:app/main.c    ****     printf("Plain text:\n%s\n\n", message);
+  27:app/main.c    **** 
+  28:app/main.c    ****     uint32_t data_len = 0;
+  29:app/main.c    ****     while(message[data_len] != '\0') data_len++;
+  30:app/main.c    ****     buffer1_len = 0;
+  31:app/main.c    ****     buffer2_len = 0;
+  32:app/main.c    **** 
+  33:app/main.c    ****     uart1_aes_encrypt((uint8_t*)message, data_len);
+  34:app/main.c    **** 
+  35:app/main.c    ****     printf("Tx data (encrypted):\n");
+  36:app/main.c    ****     for (int i=0; i<buffer1_len; i++)
+  37:app/main.c    ****     {
+  38:app/main.c    ****         printf("%02X", buffer1[i]);
+  39:app/main.c    ****     }
+  40:app/main.c    ****     printf("\n\n");
+  41:app/main.c    **** 
+  42:app/main.c    ****     uart1_aes_decrypt(buffer2, buffer1, &buffer2_len, buffer1_len);
+  43:app/main.c    **** 
+  44:app/main.c    ****     printf("Rx data (decrypted):\n");
+  45:app/main.c    ****     for (int i=0; i<buffer2_len; i++)
+  46:app/main.c    ****     {
+  47:app/main.c    ****         printf("%02X", buffer2[i]);
+  48:app/main.c    ****     }
+  49:app/main.c    ****     printf("\n\n");
+  50:app/main.c    **** 
+  51:app/main.c    ****     while (1)
+  52:app/main.c    ****     {
+  53:app/main.c    **** 
+  54:app/main.c    ****     }
+  55:app/main.c    **** }
+  56:app/main.c    **** 
+  57:app/main.c    **** void uart1_aes_encrypt(uint8_t* dt, uint32_t dt_len)
+  58:app/main.c    **** {
+  59:app/main.c    ****     uint8_t tx_dt[16];
+  60:app/main.c    ****     uint8_t tx_index = 0;
+  61:app/main.c    ****     
+  62:app/main.c    ****     for (int i=0; i<dt_len; i++)
+  63:app/main.c    ****     {
+  64:app/main.c    ****         tx_dt[tx_index++] = dt[i];
+  65:app/main.c    **** 
+  66:app/main.c    ****         if (tx_index == 16)
+  67:app/main.c    ****         {
+  68:app/main.c    ****             aes_encryption(tx_dt);
+  69:app/main.c    ****             uart1_tx(tx_dt, tx_index);
+  70:app/main.c    ****             tx_index = 0;
+  71:app/main.c    ****         }
+  72:app/main.c    ****     }
+ARM GAS  /tmp/ccjEoKGj.s 			page 3
+
+
+  73:app/main.c    **** 
+  74:app/main.c    ****     if (tx_index != 16)
+  75:app/main.c    ****     {
+  76:app/main.c    ****         tx_index = pkcs7_padding(tx_dt, tx_index);
+  77:app/main.c    ****         aes_encryption(tx_dt);
+  78:app/main.c    ****         uart1_tx(tx_dt, tx_index);
+  79:app/main.c    ****     }
+  80:app/main.c    **** }
+  81:app/main.c    **** 
+  82:app/main.c    **** void uart1_aes_decrypt(uint8_t* d_dt, uint8_t* s_dt, uint32_t* d_len, uint8_t s_len)
+  83:app/main.c    **** {
+  37              		.loc 1 83 1 view -0
+  38              		.cfi_startproc
+  39              		@ args = 0, pretend = 0, frame = 16
+  40              		@ frame_needed = 0, uses_anonymous_args = 0
+  41              		.loc 1 83 1 is_stmt 0 view .LVU1
+  42 0000 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
+  43              	.LCFI0:
+  44              		.cfi_def_cfa_offset 24
+  45              		.cfi_offset 4, -24
+  46              		.cfi_offset 5, -20
+  47              		.cfi_offset 6, -16
+  48              		.cfi_offset 7, -12
+  49              		.cfi_offset 8, -8
+  50              		.cfi_offset 14, -4
+  51 0004 84B0     		sub	sp, sp, #16
+  52              	.LCFI1:
+  53              		.cfi_def_cfa_offset 40
+  54 0006 0546     		mov	r5, r0
+  55 0008 0E46     		mov	r6, r1
+  56 000a 9046     		mov	r8, r2
+  57 000c 1F46     		mov	r7, r3
+  84:app/main.c    ****     for (int i=0; i<s_len; i+=16)
+  58              		.loc 1 84 5 is_stmt 1 view .LVU2
+  59              	.LBB2:
+  60              		.loc 1 84 10 view .LVU3
+  61              	.LVL1:
+  62              		.loc 1 84 14 is_stmt 0 view .LVU4
+  63 000e 0024     		movs	r4, #0
+  64              		.loc 1 84 5 view .LVU5
+  65 0010 21E0     		b	.L2
+  66              	.LVL2:
+  67              	.L3:
+  68              	.LBB3:
+  69              	.LBB4:
+  85:app/main.c    ****     {
+  86:app/main.c    ****         uint8_t rx[16];
+  87:app/main.c    ****         for (int j=0; j<16; j++)
+  88:app/main.c    ****         {
+  89:app/main.c    ****             rx[j] = s_dt[i+j];
+  70              		.loc 1 89 13 is_stmt 1 discriminator 3 view .LVU6
+  71              		.loc 1 89 27 is_stmt 0 discriminator 3 view .LVU7
+  72 0012 04EB0C03 		add	r3, r4, ip
+  73              		.loc 1 89 25 discriminator 3 view .LVU8
+  74 0016 F25C     		ldrb	r2, [r6, r3]	@ zero_extendqisi2
+  75              		.loc 1 89 19 discriminator 3 view .LVU9
+  76 0018 0CF11003 		add	r3, ip, #16
+ARM GAS  /tmp/ccjEoKGj.s 			page 4
+
+
+  77 001c 6B44     		add	r3, sp, r3
+  78 001e 03F8102C 		strb	r2, [r3, #-16]
+  87:app/main.c    ****         {
+  79              		.loc 1 87 29 is_stmt 1 discriminator 3 view .LVU10
+  87:app/main.c    ****         {
+  80              		.loc 1 87 30 is_stmt 0 discriminator 3 view .LVU11
+  81 0022 0CF1010C 		add	ip, ip, #1
+  82              	.LVL3:
+  83              	.L6:
+  87:app/main.c    ****         {
+  84              		.loc 1 87 23 is_stmt 1 discriminator 1 view .LVU12
+  87:app/main.c    ****         {
+  85              		.loc 1 87 9 is_stmt 0 discriminator 1 view .LVU13
+  86 0026 BCF10F0F 		cmp	ip, #15
+  87 002a F2DD     		ble	.L3
+  88              	.LBE4:
+  90:app/main.c    ****         }
+  91:app/main.c    ****         aes_decryption(rx);
+  89              		.loc 1 91 9 is_stmt 1 view .LVU14
+  90 002c 6846     		mov	r0, sp
+  91 002e FFF7FEFF 		bl	aes_decryption
+  92              	.LVL4:
+  92:app/main.c    ****         for (int j=0; j<16; j++)
+  93              		.loc 1 92 9 view .LVU15
+  94              	.LBB5:
+  95              		.loc 1 92 14 view .LVU16
+  96              		.loc 1 92 18 is_stmt 0 view .LVU17
+  97 0032 4FF0000C 		mov	ip, #0
+  98              		.loc 1 92 9 view .LVU18
+  99 0036 0AE0     		b	.L4
+ 100              	.LVL5:
+ 101              	.L5:
+  93:app/main.c    ****         {
+  94:app/main.c    ****             d_dt[i+j] = rx[j];
+ 102              		.loc 1 94 13 is_stmt 1 discriminator 3 view .LVU19
+ 103              		.loc 1 94 19 is_stmt 0 discriminator 3 view .LVU20
+ 104 0038 04EB0C0E 		add	lr, r4, ip
+ 105              		.loc 1 94 27 discriminator 3 view .LVU21
+ 106 003c 0CF11003 		add	r3, ip, #16
+ 107 0040 6B44     		add	r3, sp, r3
+ 108 0042 13F8103C 		ldrb	r3, [r3, #-16]	@ zero_extendqisi2
+ 109              		.loc 1 94 23 discriminator 3 view .LVU22
+ 110 0046 05F80E30 		strb	r3, [r5, lr]
+  92:app/main.c    ****         for (int j=0; j<16; j++)
+ 111              		.loc 1 92 29 is_stmt 1 discriminator 3 view .LVU23
+  92:app/main.c    ****         for (int j=0; j<16; j++)
+ 112              		.loc 1 92 30 is_stmt 0 discriminator 3 view .LVU24
+ 113 004a 0CF1010C 		add	ip, ip, #1
+ 114              	.LVL6:
+ 115              	.L4:
+  92:app/main.c    ****         for (int j=0; j<16; j++)
+ 116              		.loc 1 92 23 is_stmt 1 discriminator 1 view .LVU25
+  92:app/main.c    ****         for (int j=0; j<16; j++)
+ 117              		.loc 1 92 9 is_stmt 0 discriminator 1 view .LVU26
+ 118 004e BCF10F0F 		cmp	ip, #15
+ 119 0052 F1DD     		ble	.L5
+ 120              	.LBE5:
+ARM GAS  /tmp/ccjEoKGj.s 			page 5
+
+
+ 121              	.LBE3:
+  84:app/main.c    ****     {
+ 122              		.loc 1 84 28 is_stmt 1 discriminator 2 view .LVU27
+  84:app/main.c    ****     {
+ 123              		.loc 1 84 29 is_stmt 0 discriminator 2 view .LVU28
+ 124 0054 1034     		adds	r4, r4, #16
+ 125              	.LVL7:
+ 126              	.L2:
+  84:app/main.c    ****     {
+ 127              		.loc 1 84 19 is_stmt 1 discriminator 1 view .LVU29
+  84:app/main.c    ****     {
+ 128              		.loc 1 84 5 is_stmt 0 discriminator 1 view .LVU30
+ 129 0056 A742     		cmp	r7, r4
+ 130 0058 02DD     		ble	.L11
+ 131              	.LBB7:
+ 132              	.LBB6:
+  87:app/main.c    ****         {
+ 133              		.loc 1 87 18 view .LVU31
+ 134 005a 4FF0000C 		mov	ip, #0
+ 135 005e E2E7     		b	.L6
+ 136              	.L11:
+ 137              	.LBE6:
+ 138              	.LBE7:
+ 139              	.LBE2:
+  95:app/main.c    ****         }
+  96:app/main.c    ****     }
+  97:app/main.c    **** 
+  98:app/main.c    ****     uint8_t pad_len = d_dt[s_len-1];
+ 140              		.loc 1 98 5 is_stmt 1 view .LVU32
+ 141              		.loc 1 98 27 is_stmt 0 view .LVU33
+ 142 0060 7B1E     		subs	r3, r7, #1
+ 143              		.loc 1 98 13 view .LVU34
+ 144 0062 EC5C     		ldrb	r4, [r5, r3]	@ zero_extendqisi2
+ 145              	.LVL8:
+  99:app/main.c    ****     printf("Padding len %d\n", pad_len);
+ 146              		.loc 1 99 5 is_stmt 1 view .LVU35
+ 147 0064 2146     		mov	r1, r4
+ 148 0066 0848     		ldr	r0, .L13
+ 149 0068 FFF7FEFF 		bl	printf
+ 150              	.LVL9:
+ 100:app/main.c    ****     if (pad_len <= 16)
+ 151              		.loc 1 100 5 view .LVU36
+ 152              		.loc 1 100 8 is_stmt 0 view .LVU37
+ 153 006c 102C     		cmp	r4, #16
+ 154 006e 04D9     		bls	.L12
+ 101:app/main.c    ****     {
+ 102:app/main.c    ****         *d_len = s_len - pad_len;
+ 103:app/main.c    ****         printf("Ho yahhh, padding workd\n");
+ 104:app/main.c    ****     }
+ 105:app/main.c    ****     else
+ 106:app/main.c    ****     {
+ 107:app/main.c    ****         *d_len = s_len;
+ 155              		.loc 1 107 9 is_stmt 1 view .LVU38
+ 156              		.loc 1 107 16 is_stmt 0 view .LVU39
+ 157 0070 C8F80070 		str	r7, [r8]
+ 158              	.L1:
+ 108:app/main.c    ****     }
+ARM GAS  /tmp/ccjEoKGj.s 			page 6
+
+
+ 109:app/main.c    **** }
+ 159              		.loc 1 109 1 view .LVU40
+ 160 0074 04B0     		add	sp, sp, #16
+ 161              	.LCFI2:
+ 162              		.cfi_remember_state
+ 163              		.cfi_def_cfa_offset 24
+ 164              		@ sp needed
+ 165 0076 BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
+ 166              	.LVL10:
+ 167              	.L12:
+ 168              	.LCFI3:
+ 169              		.cfi_restore_state
+ 102:app/main.c    ****         printf("Ho yahhh, padding workd\n");
+ 170              		.loc 1 102 9 is_stmt 1 view .LVU41
+ 102:app/main.c    ****         printf("Ho yahhh, padding workd\n");
+ 171              		.loc 1 102 24 is_stmt 0 view .LVU42
+ 172 007a 3C1B     		subs	r4, r7, r4
+ 102:app/main.c    ****         printf("Ho yahhh, padding workd\n");
+ 173              		.loc 1 102 16 view .LVU43
+ 174 007c C8F80040 		str	r4, [r8]
+ 103:app/main.c    ****     }
+ 175              		.loc 1 103 9 is_stmt 1 view .LVU44
+ 176 0080 0248     		ldr	r0, .L13+4
+ 177 0082 FFF7FEFF 		bl	puts
+ 178              	.LVL11:
+ 179 0086 F5E7     		b	.L1
+ 180              	.L14:
+ 181              		.align	2
+ 182              	.L13:
+ 183 0088 00000000 		.word	.LC0
+ 184 008c 10000000 		.word	.LC1
+ 185              		.cfi_endproc
+ 186              	.LFE139:
+ 188              		.section	.text.uart1_tx,"ax",%progbits
+ 189              		.align	1
+ 190              		.global	uart1_tx
+ 191              		.syntax unified
+ 192              		.thumb
+ 193              		.thumb_func
+ 194              		.fpu fpv4-sp-d16
+ 196              	uart1_tx:
+ 197              	.LVL12:
+ 198              	.LFB140:
+ 110:app/main.c    **** 
+ 111:app/main.c    **** void uart1_tx(uint8_t* tx_dt, uint8_t len)
+ 112:app/main.c    **** {
+ 199              		.loc 1 112 1 view -0
+ 200              		.cfi_startproc
+ 201              		@ args = 0, pretend = 0, frame = 0
+ 202              		@ frame_needed = 0, uses_anonymous_args = 0
+ 203              		@ link register save eliminated.
+ 204              		.loc 1 112 1 is_stmt 0 view .LVU46
+ 205 0000 8C46     		mov	ip, r1
+ 113:app/main.c    ****     for (int i=0; i<len; i++)
+ 206              		.loc 1 113 5 is_stmt 1 view .LVU47
+ 207              	.LBB8:
+ 208              		.loc 1 113 10 view .LVU48
+ARM GAS  /tmp/ccjEoKGj.s 			page 7
+
+
+ 209              	.LVL13:
+ 210              		.loc 1 113 14 is_stmt 0 view .LVU49
+ 211 0002 0022     		movs	r2, #0
+ 212              		.loc 1 113 5 view .LVU50
+ 213 0004 08E0     		b	.L16
+ 214              	.LVL14:
+ 215              	.L17:
+ 114:app/main.c    ****     {
+ 115:app/main.c    ****         while (!(USART1->SR & USART_SR_TXE));
+ 216              		.loc 1 115 45 is_stmt 1 discriminator 1 view .LVU51
+ 217              		.loc 1 115 15 discriminator 1 view .LVU52
+ 218              		.loc 1 115 24 is_stmt 0 discriminator 1 view .LVU53
+ 219 0006 064B     		ldr	r3, .L18
+ 220 0008 1B68     		ldr	r3, [r3]
+ 221              		.loc 1 115 15 discriminator 1 view .LVU54
+ 222 000a 13F0800F 		tst	r3, #128
+ 223 000e FAD0     		beq	.L17
+ 116:app/main.c    ****         USART1->DR = tx_dt[i] & 0xFF;
+ 224              		.loc 1 116 9 is_stmt 1 discriminator 2 view .LVU55
+ 225              		.loc 1 116 27 is_stmt 0 discriminator 2 view .LVU56
+ 226 0010 815C     		ldrb	r1, [r0, r2]	@ zero_extendqisi2
+ 227              		.loc 1 116 20 discriminator 2 view .LVU57
+ 228 0012 034B     		ldr	r3, .L18
+ 229 0014 5960     		str	r1, [r3, #4]
+ 113:app/main.c    ****     for (int i=0; i<len; i++)
+ 230              		.loc 1 113 26 is_stmt 1 discriminator 2 view .LVU58
+ 113:app/main.c    ****     for (int i=0; i<len; i++)
+ 231              		.loc 1 113 27 is_stmt 0 discriminator 2 view .LVU59
+ 232 0016 0132     		adds	r2, r2, #1
+ 233              	.LVL15:
+ 234              	.L16:
+ 113:app/main.c    ****     for (int i=0; i<len; i++)
+ 235              		.loc 1 113 19 is_stmt 1 discriminator 1 view .LVU60
+ 113:app/main.c    ****     for (int i=0; i<len; i++)
+ 236              		.loc 1 113 5 is_stmt 0 discriminator 1 view .LVU61
+ 237 0018 9445     		cmp	ip, r2
+ 238 001a F4DC     		bgt	.L17
+ 239              	.LBE8:
+ 117:app/main.c    ****     }
+ 118:app/main.c    **** }
+ 240              		.loc 1 118 1 view .LVU62
+ 241 001c 7047     		bx	lr
+ 242              	.L19:
+ 243 001e 00BF     		.align	2
+ 244              	.L18:
+ 245 0020 00100140 		.word	1073811456
+ 246              		.cfi_endproc
+ 247              	.LFE140:
+ 249              		.section	.text.uart1_aes_encrypt,"ax",%progbits
+ 250              		.align	1
+ 251              		.global	uart1_aes_encrypt
+ 252              		.syntax unified
+ 253              		.thumb
+ 254              		.thumb_func
+ 255              		.fpu fpv4-sp-d16
+ 257              	uart1_aes_encrypt:
+ 258              	.LVL16:
+ARM GAS  /tmp/ccjEoKGj.s 			page 8
+
+
+ 259              	.LFB138:
+  58:app/main.c    ****     uint8_t tx_dt[16];
+ 260              		.loc 1 58 1 is_stmt 1 view -0
+ 261              		.cfi_startproc
+ 262              		@ args = 0, pretend = 0, frame = 16
+ 263              		@ frame_needed = 0, uses_anonymous_args = 0
+  58:app/main.c    ****     uint8_t tx_dt[16];
+ 264              		.loc 1 58 1 is_stmt 0 view .LVU64
+ 265 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 266              	.LCFI4:
+ 267              		.cfi_def_cfa_offset 20
+ 268              		.cfi_offset 4, -20
+ 269              		.cfi_offset 5, -16
+ 270              		.cfi_offset 6, -12
+ 271              		.cfi_offset 7, -8
+ 272              		.cfi_offset 14, -4
+ 273 0002 85B0     		sub	sp, sp, #20
+ 274              	.LCFI5:
+ 275              		.cfi_def_cfa_offset 40
+ 276 0004 0746     		mov	r7, r0
+ 277 0006 0E46     		mov	r6, r1
+  59:app/main.c    ****     uint8_t tx_index = 0;
+ 278              		.loc 1 59 5 is_stmt 1 view .LVU65
+  60:app/main.c    ****     
+ 279              		.loc 1 60 5 view .LVU66
+ 280              	.LVL17:
+  62:app/main.c    ****     {
+ 281              		.loc 1 62 5 view .LVU67
+ 282              	.LBB9:
+  62:app/main.c    ****     {
+ 283              		.loc 1 62 10 view .LVU68
+  62:app/main.c    ****     {
+ 284              		.loc 1 62 14 is_stmt 0 view .LVU69
+ 285 0008 0025     		movs	r5, #0
+ 286              	.LBE9:
+  60:app/main.c    ****     
+ 287              		.loc 1 60 13 view .LVU70
+ 288 000a 2946     		mov	r1, r5
+ 289              	.LVL18:
+ 290              	.LBB10:
+  62:app/main.c    ****     {
+ 291              		.loc 1 62 5 view .LVU71
+ 292 000c 01E0     		b	.L21
+ 293              	.LVL19:
+ 294              	.L22:
+  62:app/main.c    ****     {
+ 295              		.loc 1 62 29 is_stmt 1 discriminator 2 view .LVU72
+  62:app/main.c    ****     {
+ 296              		.loc 1 62 30 is_stmt 0 discriminator 2 view .LVU73
+ 297 000e 0135     		adds	r5, r5, #1
+ 298              	.LVL20:
+  62:app/main.c    ****     {
+ 299              		.loc 1 62 30 discriminator 2 view .LVU74
+ 300 0010 2146     		mov	r1, r4
+ 301              	.LVL21:
+ 302              	.L21:
+  62:app/main.c    ****     {
+ARM GAS  /tmp/ccjEoKGj.s 			page 9
+
+
+ 303              		.loc 1 62 19 is_stmt 1 discriminator 1 view .LVU75
+  62:app/main.c    ****     {
+ 304              		.loc 1 62 5 is_stmt 0 discriminator 1 view .LVU76
+ 305 0012 B542     		cmp	r5, r6
+ 306 0014 13D2     		bcs	.L26
+  64:app/main.c    **** 
+ 307              		.loc 1 64 9 is_stmt 1 view .LVU77
+  64:app/main.c    **** 
+ 308              		.loc 1 64 23 is_stmt 0 view .LVU78
+ 309 0016 4C1C     		adds	r4, r1, #1
+ 310 0018 E4B2     		uxtb	r4, r4
+ 311              	.LVL22:
+  64:app/main.c    **** 
+ 312              		.loc 1 64 31 view .LVU79
+ 313 001a 7B5D     		ldrb	r3, [r7, r5]	@ zero_extendqisi2
+  64:app/main.c    **** 
+ 314              		.loc 1 64 27 view .LVU80
+ 315 001c 01F11002 		add	r2, r1, #16
+ 316 0020 0DEB0201 		add	r1, sp, r2
+ 317 0024 01F8103C 		strb	r3, [r1, #-16]
+  66:app/main.c    ****         {
+ 318              		.loc 1 66 9 is_stmt 1 view .LVU81
+  66:app/main.c    ****         {
+ 319              		.loc 1 66 12 is_stmt 0 view .LVU82
+ 320 0028 102C     		cmp	r4, #16
+ 321 002a F0D1     		bne	.L22
+  68:app/main.c    ****             uart1_tx(tx_dt, tx_index);
+ 322              		.loc 1 68 13 is_stmt 1 view .LVU83
+ 323 002c 6846     		mov	r0, sp
+ 324 002e FFF7FEFF 		bl	aes_encryption
+ 325              	.LVL23:
+  69:app/main.c    ****             tx_index = 0;
+ 326              		.loc 1 69 13 view .LVU84
+ 327 0032 2146     		mov	r1, r4
+ 328 0034 6846     		mov	r0, sp
+ 329 0036 FFF7FEFF 		bl	uart1_tx
+ 330              	.LVL24:
+  70:app/main.c    ****         }
+ 331              		.loc 1 70 13 view .LVU85
+  70:app/main.c    ****         }
+ 332              		.loc 1 70 22 is_stmt 0 view .LVU86
+ 333 003a 0024     		movs	r4, #0
+ 334 003c E7E7     		b	.L22
+ 335              	.LVL25:
+ 336              	.L26:
+  70:app/main.c    ****         }
+ 337              		.loc 1 70 22 view .LVU87
+ 338              	.LBE10:
+  74:app/main.c    ****     {
+ 339              		.loc 1 74 5 is_stmt 1 view .LVU88
+  74:app/main.c    ****     {
+ 340              		.loc 1 74 8 is_stmt 0 view .LVU89
+ 341 003e 1029     		cmp	r1, #16
+ 342 0040 01D1     		bne	.L27
+ 343              	.LVL26:
+ 344              	.L20:
+  80:app/main.c    **** 
+ARM GAS  /tmp/ccjEoKGj.s 			page 10
+
+
+ 345              		.loc 1 80 1 view .LVU90
+ 346 0042 05B0     		add	sp, sp, #20
+ 347              	.LCFI6:
+ 348              		.cfi_remember_state
+ 349              		.cfi_def_cfa_offset 20
+ 350              		@ sp needed
+ 351 0044 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 352              	.LVL27:
+ 353              	.L27:
+ 354              	.LCFI7:
+ 355              		.cfi_restore_state
+  76:app/main.c    ****         aes_encryption(tx_dt);
+ 356              		.loc 1 76 9 is_stmt 1 view .LVU91
+  76:app/main.c    ****         aes_encryption(tx_dt);
+ 357              		.loc 1 76 20 is_stmt 0 view .LVU92
+ 358 0046 6846     		mov	r0, sp
+ 359 0048 FFF7FEFF 		bl	pkcs7_padding
+ 360              	.LVL28:
+  76:app/main.c    ****         aes_encryption(tx_dt);
+ 361              		.loc 1 76 18 view .LVU93
+ 362 004c C4B2     		uxtb	r4, r0
+ 363              	.LVL29:
+  77:app/main.c    ****         uart1_tx(tx_dt, tx_index);
+ 364              		.loc 1 77 9 is_stmt 1 view .LVU94
+ 365 004e 6846     		mov	r0, sp
+ 366 0050 FFF7FEFF 		bl	aes_encryption
+ 367              	.LVL30:
+  78:app/main.c    ****     }
+ 368              		.loc 1 78 9 view .LVU95
+ 369 0054 2146     		mov	r1, r4
+ 370 0056 6846     		mov	r0, sp
+ 371 0058 FFF7FEFF 		bl	uart1_tx
+ 372              	.LVL31:
+  80:app/main.c    **** 
+ 373              		.loc 1 80 1 is_stmt 0 view .LVU96
+ 374 005c F1E7     		b	.L20
+ 375              		.cfi_endproc
+ 376              	.LFE138:
+ 378              		.section	.rodata.main.str1.4,"aMS",%progbits,1
+ 379              		.align	2
+ 380              	.LC2:
+ 381 0000 2A2A2A2A 		.ascii	"******** UART with AES encryption ********\012\000"
+ 381      2A2A2A2A 
+ 381      20554152 
+ 381      54207769 
+ 381      74682041 
+ 382              		.align	2
+ 383              	.LC3:
+ 384 002c 506C6169 		.ascii	"Plain text:\012%s\012\012\000"
+ 384      6E207465 
+ 384      78743A0A 
+ 384      25730A0A 
+ 384      00
+ 385 003d 000000   		.align	2
+ 386              	.LC4:
+ 387 0040 54782064 		.ascii	"Tx data (encrypted):\000"
+ 387      61746120 
+ARM GAS  /tmp/ccjEoKGj.s 			page 11
+
+
+ 387      28656E63 
+ 387      72797074 
+ 387      6564293A 
+ 388 0055 000000   		.align	2
+ 389              	.LC5:
+ 390 0058 25303258 		.ascii	"%02X\000"
+ 390      00
+ 391 005d 000000   		.align	2
+ 392              	.LC6:
+ 393 0060 0A00     		.ascii	"\012\000"
+ 394 0062 0000     		.align	2
+ 395              	.LC7:
+ 396 0064 52782064 		.ascii	"Rx data (decrypted):\000"
+ 396      61746120 
+ 396      28646563 
+ 396      72797074 
+ 396      6564293A 
+ 397              		.section	.text.main,"ax",%progbits
+ 398              		.align	1
+ 399              		.global	main
+ 400              		.syntax unified
+ 401              		.thumb
+ 402              		.thumb_func
+ 403              		.fpu fpv4-sp-d16
+ 405              	main:
+ 406              	.LFB137:
+  18:app/main.c    ****     SystemInit();
+ 407              		.loc 1 18 1 is_stmt 1 view -0
+ 408              		.cfi_startproc
+ 409              		@ args = 0, pretend = 0, frame = 0
+ 410              		@ frame_needed = 0, uses_anonymous_args = 0
+ 411 0000 10B5     		push	{r4, lr}
+ 412              	.LCFI8:
+ 413              		.cfi_def_cfa_offset 8
+ 414              		.cfi_offset 4, -8
+ 415              		.cfi_offset 14, -4
+  19:app/main.c    ****     uart1_init(115200);
+ 416              		.loc 1 19 5 view .LVU98
+ 417 0002 FFF7FEFF 		bl	SystemInit
+ 418              	.LVL32:
+  20:app/main.c    ****     uart2_init(115200);
+ 419              		.loc 1 20 5 view .LVU99
+ 420 0006 4FF4E130 		mov	r0, #115200
+ 421 000a FFF7FEFF 		bl	uart1_init
+ 422              	.LVL33:
+  21:app/main.c    ****     aes_init();
+ 423              		.loc 1 21 5 view .LVU100
+ 424 000e 4FF4E130 		mov	r0, #115200
+ 425 0012 FFF7FEFF 		bl	uart2_init
+ 426              	.LVL34:
+  22:app/main.c    ****     
+ 427              		.loc 1 22 5 view .LVU101
+ 428 0016 FFF7FEFF 		bl	aes_init
+ 429              	.LVL35:
+  24:app/main.c    **** 
+ 430              		.loc 1 24 5 view .LVU102
+ 431 001a 2148     		ldr	r0, .L37
+ARM GAS  /tmp/ccjEoKGj.s 			page 12
+
+
+ 432 001c FFF7FEFF 		bl	puts
+ 433              	.LVL36:
+  26:app/main.c    **** 
+ 434              		.loc 1 26 5 view .LVU103
+ 435 0020 204B     		ldr	r3, .L37+4
+ 436 0022 1968     		ldr	r1, [r3]
+ 437 0024 2048     		ldr	r0, .L37+8
+ 438 0026 FFF7FEFF 		bl	printf
+ 439              	.LVL37:
+  28:app/main.c    ****     while(message[data_len] != '\0') data_len++;
+ 440              		.loc 1 28 5 view .LVU104
+  29:app/main.c    ****     buffer1_len = 0;
+ 441              		.loc 1 29 5 view .LVU105
+  28:app/main.c    ****     while(message[data_len] != '\0') data_len++;
+ 442              		.loc 1 28 14 is_stmt 0 view .LVU106
+ 443 002a 0021     		movs	r1, #0
+  29:app/main.c    ****     buffer1_len = 0;
+ 444              		.loc 1 29 10 view .LVU107
+ 445 002c 00E0     		b	.L29
+ 446              	.LVL38:
+ 447              	.L30:
+  29:app/main.c    ****     buffer1_len = 0;
+ 448              		.loc 1 29 38 is_stmt 1 discriminator 2 view .LVU108
+  29:app/main.c    ****     buffer1_len = 0;
+ 449              		.loc 1 29 46 is_stmt 0 discriminator 2 view .LVU109
+ 450 002e 0131     		adds	r1, r1, #1
+ 451              	.LVL39:
+ 452              	.L29:
+  29:app/main.c    ****     buffer1_len = 0;
+ 453              		.loc 1 29 10 is_stmt 1 discriminator 1 view .LVU110
+  29:app/main.c    ****     buffer1_len = 0;
+ 454              		.loc 1 29 18 is_stmt 0 discriminator 1 view .LVU111
+ 455 0030 1C4B     		ldr	r3, .L37+4
+ 456 0032 1868     		ldr	r0, [r3]
+ 457 0034 435C     		ldrb	r3, [r0, r1]	@ zero_extendqisi2
+  29:app/main.c    ****     buffer1_len = 0;
+ 458              		.loc 1 29 10 discriminator 1 view .LVU112
+ 459 0036 002B     		cmp	r3, #0
+ 460 0038 F9D1     		bne	.L30
+  30:app/main.c    ****     buffer2_len = 0;
+ 461              		.loc 1 30 5 is_stmt 1 view .LVU113
+  30:app/main.c    ****     buffer2_len = 0;
+ 462              		.loc 1 30 17 is_stmt 0 view .LVU114
+ 463 003a 0024     		movs	r4, #0
+ 464 003c 1B4B     		ldr	r3, .L37+12
+ 465 003e 1C60     		str	r4, [r3]
+  31:app/main.c    **** 
+ 466              		.loc 1 31 5 is_stmt 1 view .LVU115
+  31:app/main.c    **** 
+ 467              		.loc 1 31 17 is_stmt 0 view .LVU116
+ 468 0040 1B4B     		ldr	r3, .L37+16
+ 469 0042 1C60     		str	r4, [r3]
+  33:app/main.c    **** 
+ 470              		.loc 1 33 5 is_stmt 1 view .LVU117
+ 471 0044 FFF7FEFF 		bl	uart1_aes_encrypt
+ 472              	.LVL40:
+  35:app/main.c    ****     for (int i=0; i<buffer1_len; i++)
+ARM GAS  /tmp/ccjEoKGj.s 			page 13
+
+
+ 473              		.loc 1 35 5 view .LVU118
+ 474 0048 1A48     		ldr	r0, .L37+20
+ 475 004a FFF7FEFF 		bl	puts
+ 476              	.LVL41:
+  36:app/main.c    ****     {
+ 477              		.loc 1 36 5 view .LVU119
+ 478              	.LBB11:
+  36:app/main.c    ****     {
+ 479              		.loc 1 36 10 view .LVU120
+  36:app/main.c    ****     {
+ 480              		.loc 1 36 5 is_stmt 0 view .LVU121
+ 481 004e 05E0     		b	.L31
+ 482              	.LVL42:
+ 483              	.L32:
+  38:app/main.c    ****     }
+ 484              		.loc 1 38 9 is_stmt 1 discriminator 3 view .LVU122
+ 485 0050 194B     		ldr	r3, .L37+24
+ 486 0052 195D     		ldrb	r1, [r3, r4]	@ zero_extendqisi2
+ 487 0054 1948     		ldr	r0, .L37+28
+ 488 0056 FFF7FEFF 		bl	printf
+ 489              	.LVL43:
+  36:app/main.c    ****     {
+ 490              		.loc 1 36 34 discriminator 3 view .LVU123
+  36:app/main.c    ****     {
+ 491              		.loc 1 36 35 is_stmt 0 discriminator 3 view .LVU124
+ 492 005a 0134     		adds	r4, r4, #1
+ 493              	.LVL44:
+ 494              	.L31:
+  36:app/main.c    ****     {
+ 495              		.loc 1 36 19 is_stmt 1 discriminator 1 view .LVU125
+  36:app/main.c    ****     {
+ 496              		.loc 1 36 20 is_stmt 0 discriminator 1 view .LVU126
+ 497 005c 134B     		ldr	r3, .L37+12
+ 498 005e 1B68     		ldr	r3, [r3]
+  36:app/main.c    ****     {
+ 499              		.loc 1 36 5 discriminator 1 view .LVU127
+ 500 0060 9C42     		cmp	r4, r3
+ 501 0062 F5D3     		bcc	.L32
+ 502              	.LBE11:
+  40:app/main.c    **** 
+ 503              		.loc 1 40 5 is_stmt 1 view .LVU128
+ 504 0064 1648     		ldr	r0, .L37+32
+ 505 0066 FFF7FEFF 		bl	puts
+ 506              	.LVL45:
+  42:app/main.c    **** 
+ 507              		.loc 1 42 5 view .LVU129
+ 508 006a 104B     		ldr	r3, .L37+12
+ 509 006c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 510 006e 104A     		ldr	r2, .L37+16
+ 511 0070 1149     		ldr	r1, .L37+24
+ 512 0072 1448     		ldr	r0, .L37+36
+ 513 0074 FFF7FEFF 		bl	uart1_aes_decrypt
+ 514              	.LVL46:
+  44:app/main.c    ****     for (int i=0; i<buffer2_len; i++)
+ 515              		.loc 1 44 5 view .LVU130
+ 516 0078 1348     		ldr	r0, .L37+40
+ 517 007a FFF7FEFF 		bl	puts
+ARM GAS  /tmp/ccjEoKGj.s 			page 14
+
+
+ 518              	.LVL47:
+  45:app/main.c    ****     {
+ 519              		.loc 1 45 5 view .LVU131
+ 520              	.LBB12:
+  45:app/main.c    ****     {
+ 521              		.loc 1 45 10 view .LVU132
+  45:app/main.c    ****     {
+ 522              		.loc 1 45 14 is_stmt 0 view .LVU133
+ 523 007e 0024     		movs	r4, #0
+ 524              	.LVL48:
+  45:app/main.c    ****     {
+ 525              		.loc 1 45 5 view .LVU134
+ 526 0080 05E0     		b	.L33
+ 527              	.LVL49:
+ 528              	.L34:
+  47:app/main.c    ****     }
+ 529              		.loc 1 47 9 is_stmt 1 discriminator 3 view .LVU135
+ 530 0082 104B     		ldr	r3, .L37+36
+ 531 0084 195D     		ldrb	r1, [r3, r4]	@ zero_extendqisi2
+ 532 0086 0D48     		ldr	r0, .L37+28
+ 533 0088 FFF7FEFF 		bl	printf
+ 534              	.LVL50:
+  45:app/main.c    ****     {
+ 535              		.loc 1 45 34 discriminator 3 view .LVU136
+  45:app/main.c    ****     {
+ 536              		.loc 1 45 35 is_stmt 0 discriminator 3 view .LVU137
+ 537 008c 0134     		adds	r4, r4, #1
+ 538              	.LVL51:
+ 539              	.L33:
+  45:app/main.c    ****     {
+ 540              		.loc 1 45 19 is_stmt 1 discriminator 1 view .LVU138
+  45:app/main.c    ****     {
+ 541              		.loc 1 45 20 is_stmt 0 discriminator 1 view .LVU139
+ 542 008e 084B     		ldr	r3, .L37+16
+ 543 0090 1B68     		ldr	r3, [r3]
+  45:app/main.c    ****     {
+ 544              		.loc 1 45 5 discriminator 1 view .LVU140
+ 545 0092 9C42     		cmp	r4, r3
+ 546 0094 F5D3     		bcc	.L34
+ 547              	.LBE12:
+  49:app/main.c    **** 
+ 548              		.loc 1 49 5 is_stmt 1 view .LVU141
+ 549 0096 0A48     		ldr	r0, .L37+32
+ 550 0098 FFF7FEFF 		bl	puts
+ 551              	.LVL52:
+ 552              	.L35:
+  51:app/main.c    ****     {
+ 553              		.loc 1 51 5 discriminator 1 view .LVU142
+  54:app/main.c    **** }
+ 554              		.loc 1 54 5 discriminator 1 view .LVU143
+  51:app/main.c    ****     {
+ 555              		.loc 1 51 11 discriminator 1 view .LVU144
+ 556 009c FEE7     		b	.L35
+ 557              	.L38:
+ 558 009e 00BF     		.align	2
+ 559              	.L37:
+ 560 00a0 00000000 		.word	.LC2
+ARM GAS  /tmp/ccjEoKGj.s 			page 15
+
+
+ 561 00a4 00000000 		.word	.LANCHOR0
+ 562 00a8 2C000000 		.word	.LC3
+ 563 00ac 00000000 		.word	.LANCHOR1
+ 564 00b0 00000000 		.word	.LANCHOR2
+ 565 00b4 40000000 		.word	.LC4
+ 566 00b8 00000000 		.word	.LANCHOR3
+ 567 00bc 58000000 		.word	.LC5
+ 568 00c0 60000000 		.word	.LC6
+ 569 00c4 00000000 		.word	.LANCHOR4
+ 570 00c8 64000000 		.word	.LC7
+ 571              		.cfi_endproc
+ 572              	.LFE137:
+ 574              		.section	.text.USART1_IRQHandler,"ax",%progbits
+ 575              		.align	1
+ 576              		.global	USART1_IRQHandler
+ 577              		.syntax unified
+ 578              		.thumb
+ 579              		.thumb_func
+ 580              		.fpu fpv4-sp-d16
+ 582              	USART1_IRQHandler:
+ 583              	.LFB141:
+ 119:app/main.c    **** 
+ 120:app/main.c    **** void USART1_IRQHandler(void)
+ 121:app/main.c    **** {
+ 584              		.loc 1 121 1 view -0
+ 585              		.cfi_startproc
+ 586              		@ args = 0, pretend = 0, frame = 0
+ 587              		@ frame_needed = 0, uses_anonymous_args = 0
+ 588              		@ link register save eliminated.
+ 122:app/main.c    ****     if (USART1->SR & USART_SR_RXNE)
+ 589              		.loc 1 122 5 view .LVU146
+ 590              		.loc 1 122 15 is_stmt 0 view .LVU147
+ 591 0000 064B     		ldr	r3, .L41
+ 592 0002 1B68     		ldr	r3, [r3]
+ 593              		.loc 1 122 8 view .LVU148
+ 594 0004 13F0200F 		tst	r3, #32
+ 595 0008 07D0     		beq	.L39
+ 123:app/main.c    ****         buffer1[buffer1_len++] = USART1->DR;
+ 596              		.loc 1 123 9 is_stmt 1 view .LVU149
+ 597              		.loc 1 123 40 is_stmt 0 view .LVU150
+ 598 000a 044B     		ldr	r3, .L41
+ 599 000c 5968     		ldr	r1, [r3, #4]
+ 600              		.loc 1 123 28 view .LVU151
+ 601 000e 044A     		ldr	r2, .L41+4
+ 602 0010 1368     		ldr	r3, [r2]
+ 603 0012 581C     		adds	r0, r3, #1
+ 604 0014 1060     		str	r0, [r2]
+ 605              		.loc 1 123 32 view .LVU152
+ 606 0016 034A     		ldr	r2, .L41+8
+ 607 0018 D154     		strb	r1, [r2, r3]
+ 608              	.L39:
+ 124:app/main.c    **** }...
+ 609              		.loc 1 124 1 view .LVU153
+ 610 001a 7047     		bx	lr
+ 611              	.L42:
+ 612              		.align	2
+ 613              	.L41:
+ARM GAS  /tmp/ccjEoKGj.s 			page 16
+
+
+ 614 001c 00100140 		.word	1073811456
+ 615 0020 00000000 		.word	.LANCHOR1
+ 616 0024 00000000 		.word	.LANCHOR3
+ 617              		.cfi_endproc
+ 618              	.LFE141:
+ 620              		.global	message
+ 621              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 622              		.align	2
+ 623              	.LC8:
+ 624 0000 436F6E66 		.ascii	"Confidential: Please keep this information safe.\000"
+ 624      6964656E 
+ 624      7469616C 
+ 624      3A20506C 
+ 624      65617365 
+ 625              		.global	buffer2_len
+ 626              		.global	buffer2
+ 627              		.global	buffer1_len
+ 628              		.global	buffer1
+ 629              		.section	.bss.buffer1,"aw",%nobits
+ 630              		.align	2
+ 631              		.set	.LANCHOR3,. + 0
+ 634              	buffer1:
+ 635 0000 00000000 		.space	256
+ 635      00000000 
+ 635      00000000 
+ 635      00000000 
+ 635      00000000 
+ 636              		.section	.bss.buffer1_len,"aw",%nobits
+ 637              		.align	2
+ 638              		.set	.LANCHOR1,. + 0
+ 641              	buffer1_len:
+ 642 0000 00000000 		.space	4
+ 643              		.section	.bss.buffer2,"aw",%nobits
+ 644              		.align	2
+ 645              		.set	.LANCHOR4,. + 0
+ 648              	buffer2:
+ 649 0000 00000000 		.space	256
+ 649      00000000 
+ 649      00000000 
+ 649      00000000 
+ 649      00000000 
+ 650              		.section	.bss.buffer2_len,"aw",%nobits
+ 651              		.align	2
+ 652              		.set	.LANCHOR2,. + 0
+ 655              	buffer2_len:
+ 656 0000 00000000 		.space	4
+ 657              		.section	.data.message,"aw"
+ 658              		.align	2
+ 659              		.set	.LANCHOR0,. + 0
+ 662              	message:
+ 663 0000 00000000 		.word	.LC8
+ 664              		.text
+ 665              	.Letext0:
+ 666              		.file 2 "/usr/include/newlib/machine/_default_types.h"
+ 667              		.file 3 "/usr/include/newlib/sys/_stdint.h"
+ 668              		.file 4 "driver/Device/stm32f401xc.h"
+ 669              		.file 5 "inc/aes.h"
+ARM GAS  /tmp/ccjEoKGj.s 			page 17
+
+
+ 670              		.file 6 "/usr/include/newlib/stdio.h"
+ 671              		.file 7 "driver/Device/system_stm32f401.h"
+ 672              		.file 8 "inc/uart.h"
+ 673              		.file 9 "<built-in>"
+ARM GAS  /tmp/ccjEoKGj.s 			page 18
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 main.c
+     /tmp/ccjEoKGj.s:18     .rodata.uart1_aes_decrypt.str1.4:0000000000000000 $d
+     /tmp/ccjEoKGj.s:25     .text.uart1_aes_decrypt:0000000000000000 $t
+     /tmp/ccjEoKGj.s:33     .text.uart1_aes_decrypt:0000000000000000 uart1_aes_decrypt
+     /tmp/ccjEoKGj.s:183    .text.uart1_aes_decrypt:0000000000000088 $d
+     /tmp/ccjEoKGj.s:189    .text.uart1_tx:0000000000000000 $t
+     /tmp/ccjEoKGj.s:196    .text.uart1_tx:0000000000000000 uart1_tx
+     /tmp/ccjEoKGj.s:245    .text.uart1_tx:0000000000000020 $d
+     /tmp/ccjEoKGj.s:250    .text.uart1_aes_encrypt:0000000000000000 $t
+     /tmp/ccjEoKGj.s:257    .text.uart1_aes_encrypt:0000000000000000 uart1_aes_encrypt
+     /tmp/ccjEoKGj.s:379    .rodata.main.str1.4:0000000000000000 $d
+     /tmp/ccjEoKGj.s:398    .text.main:0000000000000000 $t
+     /tmp/ccjEoKGj.s:405    .text.main:0000000000000000 main
+     /tmp/ccjEoKGj.s:560    .text.main:00000000000000a0 $d
+     /tmp/ccjEoKGj.s:575    .text.USART1_IRQHandler:0000000000000000 $t
+     /tmp/ccjEoKGj.s:582    .text.USART1_IRQHandler:0000000000000000 USART1_IRQHandler
+     /tmp/ccjEoKGj.s:614    .text.USART1_IRQHandler:000000000000001c $d
+     /tmp/ccjEoKGj.s:662    .data.message:0000000000000000 message
+     /tmp/ccjEoKGj.s:622    .rodata.str1.4:0000000000000000 $d
+     /tmp/ccjEoKGj.s:655    .bss.buffer2_len:0000000000000000 buffer2_len
+     /tmp/ccjEoKGj.s:648    .bss.buffer2:0000000000000000 buffer2
+     /tmp/ccjEoKGj.s:641    .bss.buffer1_len:0000000000000000 buffer1_len
+     /tmp/ccjEoKGj.s:634    .bss.buffer1:0000000000000000 buffer1
+     /tmp/ccjEoKGj.s:630    .bss.buffer1:0000000000000000 $d
+     /tmp/ccjEoKGj.s:637    .bss.buffer1_len:0000000000000000 $d
+     /tmp/ccjEoKGj.s:644    .bss.buffer2:0000000000000000 $d
+     /tmp/ccjEoKGj.s:651    .bss.buffer2_len:0000000000000000 $d
+     /tmp/ccjEoKGj.s:658    .data.message:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+aes_decryption
+printf
+puts
+aes_encryption
+pkcs7_padding
+SystemInit
+uart1_init
+uart2_init
+aes_init
